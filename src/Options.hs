@@ -7,6 +7,7 @@ module Options (
 , defaultFastMode
 , defaultPreserveIt
 , defaultVerbose
+, defaultIsolateModules
 , parseOptions
 #ifdef TEST
 , usage
@@ -79,6 +80,7 @@ data Run = Run {
 , runFastMode :: Bool
 , runPreserveIt :: Bool
 , runVerbose :: Bool
+, runIsolateModules :: Bool
 } deriving (Eq, Show)
 
 defaultMagic :: Bool
@@ -93,6 +95,9 @@ defaultPreserveIt = False
 defaultVerbose :: Bool
 defaultVerbose = False
 
+defaultIsolateModules :: Bool
+defaultIsolateModules = True
+
 defaultRun :: Run
 defaultRun = Run {
   runWarnings = []
@@ -101,6 +106,7 @@ defaultRun = Run {
 , runFastMode = defaultFastMode
 , runPreserveIt = defaultPreserveIt
 , runVerbose = defaultVerbose
+, runIsolateModules = defaultIsolateModules
 }
 
 modifyWarnings :: ([String] -> [String]) -> Run -> Run
@@ -121,6 +127,9 @@ setPreserveIt preserveIt run = run { runPreserveIt = preserveIt }
 setVerbose :: Bool -> Run -> Run
 setVerbose verbose run = run { runVerbose = verbose }
 
+setIsolateModules :: Bool -> Run -> Run
+setIsolateModules isolate run = run { runIsolateModules = isolate }
+
 parseOptions :: [String] -> Result Run
 parseOptions args
   | "--help" `elem` args = Output usage
@@ -137,6 +146,10 @@ parseOptions args
         stripPreserveIt
         stripVerbose
         stripOptGhc
+        stripNoIsolateModules
+
+stripNoIsolateModules :: RWS () (Endo Run) [String] ()
+stripNoIsolateModules = stripFlag (setIsolateModules False) "--no-isolate-modules"
 
 stripNoMagic :: RWS () (Endo Run) [String] ()
 stripNoMagic = stripFlag (setMagicMode False) "--no-magic"

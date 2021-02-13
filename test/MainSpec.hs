@@ -26,7 +26,9 @@ doctest = doctestWithPreserveIt defaultPreserveIt
 
 doctestWithPreserveIt :: HasCallStack => Bool -> FilePath -> [String] -> Summary -> Assertion
 doctestWithPreserveIt preserveIt workingDir args expected = do
-  actual <- withCurrentDirectory ("test/integration" </> workingDir) (hSilence [stderr] $ doctestWithOptions defaultFastMode preserveIt defaultVerbose args)
+  actual <-
+    withCurrentDirectory ("test/integration" </> workingDir) (hSilence [stderr] $
+      doctestWithOptions defaultFastMode preserveIt defaultVerbose defaultIsolateModules args)
   assertEqual label expected actual
   where
     label = workingDir ++ " " ++ show args
@@ -139,6 +141,14 @@ spec = do
       doctest "property-setup" ["Foo.hs"]
         (cases 3)
 
+  describe "doctest (module isolation)" $ do
+    it "should fail with module isolation" $ do
+      doctest "module-isolation" ["TestA.hs", "TestB.hs"]
+        (cases 1) {sErrors = 1}
+    it "should work without module isolation" $ do
+      doctest "module-isolation" ["--no-isolate-modules", "TestA.hs", "TestB.hs"]
+        (cases 1)
+
   describe "doctest (regression tests)" $ do
     it "bugfixWorkingDirectory" $ do
       doctest "bugfixWorkingDirectory" ["Fib.hs"]
@@ -175,4 +185,3 @@ spec = do
     it "doesn't get confused by doctests using System.IO imports" $ do
       doctest "system-io-imported" ["A.hs"]
         (cases 1)
-
